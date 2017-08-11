@@ -33,13 +33,12 @@ const int64_t NANOSECONDS_IN_MILLISECONDS = 1000 * 1000;
 #define SECONDS_TO_MILLISECONDS(seconds)            (int32_t(seconds) * MILLISECONDS_IN_SECONDS)
 #define NANOSECONDS_TO_MILLISECONDS(nanoseconds)    ((nanoseconds) / NANOSECONDS_IN_MILLISECONDS)
 
-CEventThread::CEventThread(IEventListener *eventListener, bool logsOn)
+CEventThread::CEventThread(IEventListener *eventListener)
     : mEventListener(eventListener),
       mIsStarted(false),
       mThreadId(0),
       mNbPollFds(0),
-      mAlarmMs(-1),
-      mLogsOn(logsOn)
+      mAlarmMs(-1)
 {
     AUDIOUTILITIES_ASSERT(eventListener, "Invalid event listener");
 
@@ -102,7 +101,7 @@ int CEventThread::getFd(uint32_t clientFdId) const
             return pFd->mFd;
         }
     }
-    ALOGD_IF(mLogsOn, "%s: Could not find File descriptor from List", __func__);
+    ALOGV("%s: Could not find File descriptor from List", __func__);
     return -1;
 }
 
@@ -154,7 +153,7 @@ void CEventThread::stop()
 
 void CEventThread::trig(void *context, uint32_t eventId /* = -1 */)
 {
-    ALOGD_IF(mLogsOn, "%s: in", __func__);
+    ALOGV("%s: in", __func__);
 
     AUDIOUTILITIES_ASSERT(mIsStarted, "Event thread not started");
 
@@ -171,7 +170,7 @@ void CEventThread::trig(void *context, uint32_t eventId /* = -1 */)
                       "Unable to write message in pipe: ret: "
                       << ret << " status: " << strerror(errno));
 
-    ALOGD_IF(mLogsOn, "%s: out", __func__);
+    ALOGV("%s: out", __func__);
 }
 
 bool CEventThread::inThreadContext() const
@@ -209,7 +208,7 @@ void CEventThread::run()
 
         }
         // Do poll
-        ALOGD("%s Do poll with timeout: %d", __func__, timeoutMs);
+        ALOGV("%s Do poll with timeout: %d", __func__, timeoutMs);
         int pollResult = poll(pollFds, mNbPollFds, timeoutMs);
 
         if (!pollResult) {
@@ -239,7 +238,7 @@ void CEventThread::run()
                     continue;
                 }
             } else {
-                ALOGD_IF(mLogsOn, "%s exit", __func__);
+                ALOGD("%s exit", __func__);
                 return;
             }
         }
@@ -248,7 +247,7 @@ void CEventThread::run()
             for (index = 1; index < mNbPollFds; index++) {
                 // Check for errors first and reports to the listener
                 if (pollFds[index].revents & POLLERR) {
-                    ALOGD_IF(mLogsOn, "%s POLLERR event on Fd (%d)", __func__, index);
+                    ALOGV("%s POLLERR event on Fd (%d)", __func__, index);
 
                     if (mEventListener->onError(pollFds[index].fd)) {
                         // FD list has changed, bail out
@@ -257,7 +256,7 @@ void CEventThread::run()
                 }
                 // Check for hang ups and reports to the listener
                 if (pollFds[index].revents & POLLHUP) {
-                    ALOGD_IF(mLogsOn, "%s POLLHUP event on Fd (%d)", __func__, index);
+                    ALOGV("%s POLLHUP event on Fd (%d)", __func__, index);
 
                     if (mEventListener->onHangup(pollFds[index].fd)) {
                         // FD list has changed, bail out
@@ -266,7 +265,7 @@ void CEventThread::run()
                 }
                 // Check for read events and reports to the listener
                 if (pollFds[index].revents & POLLIN) {
-                    ALOGD_IF(mLogsOn, "%s POLLIN event on Fd (%d)", __func__, index);
+                    ALOGV("%s POLLIN event on Fd (%d)", __func__, index);
 
                     if (mEventListener->onEvent(pollFds[index].fd)) {
                         // FD list has changed, bail out
@@ -306,9 +305,4 @@ int64_t CEventThread::getCurrentDateMs()
     clock_gettime(CLOCK_MONOTONIC, &now);
 
     return SECONDS_TO_MILLISECONDS(now.tv_sec) + NANOSECONDS_TO_MILLISECONDS(now.tv_nsec);
-}
-
-void CEventThread::setLogsState(bool logsOn)
-{
-    mLogsOn = logsOn;
 }

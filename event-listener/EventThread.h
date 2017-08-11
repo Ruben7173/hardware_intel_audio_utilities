@@ -57,7 +57,7 @@ private:
     typedef list<SFd>::const_iterator FdListConstIterator;
 
 public:
-    CEventThread(IEventListener *eventListener, bool bLogsOn = true);
+    CEventThread(IEventListener *eventListener);
     ~CEventThread();
 
     /**
@@ -150,12 +150,6 @@ public:
      */
     bool inThreadContext() const;
 
-    /**
-     * Logs activation.
-     */
-    void setLogsState(bool logsOn);
-    bool isLogsOn() const { return mLogsOn; }
-
 private:
     /**
      * Event Thread function.
@@ -205,5 +199,4 @@ private:
     list<SFd> mFdList; /**< List of File descriptors polled by the event thread. */
     uint32_t mNbPollFds; /**< Number of file descriptor polled. */
     int64_t mAlarmMs; /**< Alarm date in milliseconds. */
-    bool mLogsOn; /**< Event Thread enabled log flag. */
 };
