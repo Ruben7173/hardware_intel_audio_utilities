@@ -14,8 +14,8 @@ include $(BUILD_STATIC_LIBRARY)
 
 # Build for host
 include $(CLEAR_VARS)
-LOCAL_COPY_HEADERS_TO := full_rw
-LOCAL_COPY_HEADERS :=  full_rw.h
+#LOCAL_COPY_HEADERS_TO := full_rw
+#LOCAL_COPY_HEADERS :=  full_rw.h
 LOCAL_SRC_FILES := full_rw.c
 LOCAL_MODULE := libfull_rw_host
 LOCAL_MODULE_OWNER := intel
